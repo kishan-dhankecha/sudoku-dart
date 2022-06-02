@@ -1,14 +1,14 @@
 /* Dart program for Sudoku generator */
 import 'dart:math' show Random, Point;
 
-import '../helpers/command_line_color.dart';
-import 'cell.dart';
-import 'puzzle_size.dart';
+import 'helpers/command_line_color.dart';
+import 'models/cell.dart';
+import 'models/puzzle_size.dart';
 
 export 'dart:math' show Random;
 
-export 'cell.dart';
-export 'puzzle_size.dart';
+export 'models/cell.dart';
+export 'models/puzzle_size.dart';
 
 class Sudoku {
   /// Defines the [PuzzleSize] of the current sudoku board.
@@ -37,8 +37,6 @@ class Sudoku {
 
     /// Seed the seed for new game
     rand = Random(this.seed);
-
-    fillValues();
   }
 
   /// Sudoku Generator
@@ -215,10 +213,7 @@ class Sudoku {
 
   @override
   String toString() {
-    return ''
-        'Puzzle size: '
-        '${size.clColor}${size.n}x${size.n}${CL.rt}\n'
-        'Vacancies: '
-        '${size.clColor}${size.vacancies}${CL.rt}';
+    return 'Puzzle size: ${size.clColor}${size.n}x${size.n}${CL.rt}\n'
+        'Vacancies: ${size.clColor}${size.vacancies}${CL.rt}';
   }
 }
