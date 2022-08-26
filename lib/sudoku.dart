@@ -1,29 +1,31 @@
 /* Dart program for Sudoku generator */
 import 'dart:math' show Random, Point;
 
+import 'enums/puzzle_size.dart';
 import 'helpers/command_line_color.dart';
 import 'models/cell.dart';
-import 'models/puzzle_size.dart';
 
 export 'dart:math' show Random;
 
+export 'enums/puzzle_size.dart';
 export 'models/cell.dart';
-export 'models/puzzle_size.dart';
 
 class Sudoku {
   /// Defines the [PuzzleSize] of the current sudoku board.
   final PuzzleSize size;
 
-  late final Random rand;
+  final int vacancies;
+
+  late final Random random;
 
   late final int seed;
 
   /// Matrix of [Cell] for the current sudoku board.
-  late List<List<Cell>> matrix;
+  late List<List<Cell>> board;
 
-  Sudoku({int? seed, required this.size}) {
+  Sudoku({int? seed, required this.size, this.vacancies = 0}) {
     /// Generate the new [matrix] with relative point and value as 0.
-    matrix = List.generate(size.n, (x) {
+    board = List.generate(size.n, (x) {
       return List.generate(size.n, (y) {
         return Cell(Point(x, y));
       }, growable: false);
@@ -36,20 +38,18 @@ class Sudoku {
     }
 
     /// Seed the seed for new game
-    rand = Random(this.seed);
+    random = Random(this.seed);
+
+    /// Generate board
+    fillValues();
   }
 
   /// Sudoku Generator
   void fillValues() {
-    final stopwatch = Stopwatch()..start();
-    var attept = 0;
     do {
-      attept++;
       _fillDiagonal();
     } while (!_fillRemaining(0, size.sq));
     _addVacancies();
-    stopwatch.stop();
-    printPuzzle(time: stopwatch.elapsed.inMilliseconds, attept: attept);
   }
 
   /// Fill the diagonal [size.sq] x [size.sq] metrix of [size.n] x [size.n] matrices
@@ -65,8 +65,8 @@ class Sudoku {
     var options = List.generate(size.n, (index) => index + 1);
     for (int i = 0; i < size.sq; i++) {
       for (int j = 0; j < size.sq; j++) {
-        var n = options[rand.nextInt(options.length)];
-        matrix[row + i][col + j].setVal(n);
+        var n = options[random.nextInt(options.length)];
+        board[row + i][col + j].setVal(n);
         options.remove(n);
       }
     }
@@ -93,9 +93,9 @@ class Sudoku {
     }
     for (int n = 1; n <= size.n; n++) {
       if (_checkIfSafe(x, y, n)) {
-        matrix[x][y].setVal(n);
+        board[x][y].setVal(n);
         if (_fillRemaining(x, y + 1)) return true;
-        matrix[x][y].setVal(0);
+        board[x][y].setVal(0);
       }
     }
     return false;
@@ -111,7 +111,7 @@ class Sudoku {
   /// check in the row for existence
   bool _availInRow(int i, int n) {
     for (int j = 0; j < size.n; j++) {
-      if (matrix[i][j].value == n) return false;
+      if (board[i][j].value == n) return false;
     }
     return true;
   }
@@ -119,7 +119,7 @@ class Sudoku {
   /// check in the row for existence
   bool _availInCol(int j, int n) {
     for (int i = 0; i < size.n; i++) {
-      if (matrix[i][j].value == n) return false;
+      if (board[i][j].value == n) return false;
     }
     return true;
   }
@@ -128,7 +128,7 @@ class Sudoku {
   bool _availInBox(int rowStart, int colStart, int number) {
     for (var i = 0; i < size.sq; i++) {
       for (var j = 0; j < size.sq; j++) {
-        if (matrix[rowStart + i][colStart + j].value == number) return false;
+        if (board[rowStart + i][colStart + j].value == number) return false;
       }
     }
     return true;
@@ -136,18 +136,18 @@ class Sudoku {
 
   /// Add [vacancies] to complete game
   void _addVacancies() {
-    int count = size.vacancies;
+    int count = vacancies;
     while (count != 0) {
-      int i = rand.nextInt(size.n);
-      int j = rand.nextInt(size.n);
-      if (matrix[i][j].value != 0) {
+      int i = random.nextInt(size.n);
+      int j = random.nextInt(size.n);
+      if (board[i][j].value != 0) {
         count--;
-        matrix[i][j].setVal(0);
+        board[i][j].setVal(0);
       }
     }
   }
 
-  void displayPuzzle() {
+  String get prettyBoard {
     var table = '';
 
     // to add '0' as prefix for smaller numbers
@@ -189,31 +189,24 @@ class Sudoku {
         table += ' ';
 
         // show the number or if its a zero show '.'
-        if (matrix[row][col].value == 0) {
+        if (board[row][col].value == 0) {
           table += '.'.padLeft(length, '.');
         } else {
-          table += '${matrix[row][col].value}'.padLeft(length, '0');
+          table += '${board[row][col].value}'.padLeft(length, '0');
         }
 
         // add space after the number
         table += ' ';
       }
     }
-    table += '\n\n';
-    print(table);
-  }
-
-  void printPuzzle({required int time, required int attept}) {
-    print(this);
-    displayPuzzle();
-    print('Seed: ${size.clColor}$seed${CL.rt}');
-    print('Time taken to generate: ${size.clColor}${time}ms${CL.rt}');
-    print('Attepts to get solvable puzzle: ${size.clColor}$attept${CL.rt}');
+    return table;
   }
 
   @override
   String toString() {
     return 'Puzzle size: ${size.clColor}${size.n}x${size.n}${CL.rt}\n'
-        'Vacancies: ${size.clColor}${size.vacancies}${CL.rt}';
+        'Vacancies: ${size.clColor}$vacancies${CL.rt}\n'
+        'Seed: ${size.clColor}$seed${CL.rt}\n'
+        '$prettyBoard';
   }
 }
