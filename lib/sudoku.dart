@@ -2,7 +2,6 @@
 import 'dart:math' show Random, Point;
 
 import 'enums/puzzle_size.dart';
-import 'helpers/command_line_color.dart';
 import 'models/cell.dart';
 
 export 'dart:math' show Random;
@@ -11,13 +10,19 @@ export 'enums/puzzle_size.dart';
 export 'models/cell.dart';
 
 class Sudoku {
-  /// Defines the [PuzzleSize] of the current sudoku board.
+  /// Defines the size of the current sudoku board.
   final PuzzleSize size;
 
+  /// Defines the empty cell in board.
+  ///
+  /// by default set to [0]
   final int vacancies;
 
-  late final Random random;
+  late final Random _random;
 
+  /// Defines the board generation seed.
+  ///
+  /// by default set to [DateTime.now().millisecondsSinceEpoch]
   late final int seed;
 
   /// Matrix of [Cell] for the current sudoku board.
@@ -31,28 +36,23 @@ class Sudoku {
       }, growable: false);
     }, growable: false);
 
-    if (seed == null) {
-      this.seed = DateTime.now().millisecondsSinceEpoch;
-    } else {
-      this.seed = seed;
-    }
-
     /// Seed the seed for new game
-    random = Random(this.seed);
+    this.seed = seed ?? DateTime.now().millisecondsSinceEpoch;
+    _random = Random(this.seed);
 
     /// Generate board
-    fillValues();
+    generate();
   }
 
   /// Sudoku Generator
-  void fillValues() {
+  void generate() {
     do {
       _fillDiagonal();
     } while (!_fillRemaining(0, size.sq));
     _addVacancies();
   }
 
-  /// Fill the diagonal [size.sq] x [size.sq] metrix of [size.n] x [size.n] matrices
+  /// Fill the diagonal [size.sq] x [size.sq] matrix of [size.n] x [size.n] matrices
   void _fillDiagonal() {
     for (int i = 0; i < size.n; i = i + size.sq) {
       // for diagonal box, start coordinates -> i==j
@@ -65,9 +65,8 @@ class Sudoku {
     var options = List.generate(size.n, (index) => index + 1);
     for (int i = 0; i < size.sq; i++) {
       for (int j = 0; j < size.sq; j++) {
-        var n = options[random.nextInt(options.length)];
+        var n = options.removeAt(_random.nextInt(options.length));
         board[row + i][col + j].setVal(n);
-        options.remove(n);
       }
     }
   }
@@ -138,8 +137,8 @@ class Sudoku {
   void _addVacancies() {
     int count = vacancies;
     while (count != 0) {
-      int i = random.nextInt(size.n);
-      int j = random.nextInt(size.n);
+      int i = _random.nextInt(size.n);
+      int j = _random.nextInt(size.n);
       if (board[i][j].value != 0) {
         count--;
         board[i][j].setVal(0);
@@ -160,9 +159,6 @@ class Sudoku {
 
       // Add --+-- if its a edge of box
       if (row != 0 && row % size.sq == 0) {
-        // set termial color
-        table += size.clColor;
-
         // calculate the number of dashes (-) for 1 box
         var dashes = (size.sq * 2) + size.sq * length;
 
@@ -176,14 +172,14 @@ class Sudoku {
           // adds the dashes
           table += '-';
         }
-        // reset termial color
-        table += '${CL.rt}\n';
+        // Add line break for every row
+        table += '\n';
       }
 
       // loop through every cell of row
       for (int col = 0; col < size.n; col++) {
         // Add | if its a edge of box with color
-        if (col != 0 && col % size.sq == 0) table += '${size.clColor}|${CL.rt}';
+        if (col != 0 && col % size.sq == 0) table += '|';
 
         // add space before the number
         table += ' ';
@@ -204,9 +200,9 @@ class Sudoku {
 
   @override
   String toString() {
-    return 'Puzzle size: ${size.clColor}${size.n}x${size.n}${CL.rt}\n'
-        'Vacancies: ${size.clColor}$vacancies${CL.rt}\n'
-        'Seed: ${size.clColor}$seed${CL.rt}\n'
+    return 'Puzzle size: ${size.n}x${size.n}\n'
+        'Vacancies: $vacancies\n'
+        'Seed: $seed\n'
         '$prettyBoard';
   }
 }
