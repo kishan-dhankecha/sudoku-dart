@@ -13,7 +13,7 @@ enum PuzzleSize {
   final int n;
 
   /// Returns the square root of [PuzzleSize.n]
-  int get sq => sqrt(n).toInt();
+  int get sqr => sqrt(n).toInt();
 
   const PuzzleSize(this.n);
 }

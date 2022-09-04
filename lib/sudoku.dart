@@ -29,6 +29,11 @@ class Sudoku {
   late List<List<Cell>> board;
 
   Sudoku({int? seed, required this.size, this.vacancies = 0}) {
+    assert(
+      vacancies >= 0 && vacancies < (size.n * size.n),
+      "Vacancies must be between 0 and ${size.n * size.n}",
+    );
+
     /// Generate the new [matrix] with relative point and value as 0.
     board = List.generate(size.n, (x) {
       return List.generate(size.n, (y) {
@@ -48,23 +53,23 @@ class Sudoku {
   void generate() {
     do {
       _fillDiagonal();
-    } while (!_fillRemaining(0, size.sq));
+    } while (!_fillRemaining(0, size.sqr));
     _addVacancies();
   }
 
-  /// Fill the diagonal [size.sq] x [size.sq] matrix of [size.n] x [size.n] matrices
+  /// Fill the diagonal [size.sqr] x [size.sqr] matrix of [size.n] x [size.n] matrices
   void _fillDiagonal() {
-    for (int i = 0; i < size.n; i = i + size.sq) {
+    for (int i = 0; i < size.n; i = i + size.sqr) {
       // for diagonal box, start coordinates -> i==j
       _fillBox(i, i);
     }
   }
 
-  /// Fill a [size.sq] x [size.sq] matrix.
+  /// Fill a [size.sqr] x [size.sqr] matrix.
   void _fillBox(int row, int col) {
     var options = List.generate(size.n, (index) => index + 1);
-    for (int i = 0; i < size.sq; i++) {
-      for (int j = 0; j < size.sq; j++) {
+    for (int i = 0; i < size.sqr; i++) {
+      for (int j = 0; j < size.sqr; j++) {
         var n = options.removeAt(_random.nextInt(options.length));
         board[row + i][col + j].setVal(n);
       }
@@ -79,12 +84,12 @@ class Sudoku {
     }
     if (x >= size.n && y >= size.n) return true;
 
-    if (x < size.sq) {
-      if (y < size.sq) y = size.sq;
-    } else if (x < size.n - size.sq) {
-      if (y == (x ~/ size.sq) * size.sq) y = y + size.sq;
+    if (x < size.sqr) {
+      if (y < size.sqr) y = size.sqr;
+    } else if (x < size.n - size.sqr) {
+      if (y == (x ~/ size.sqr) * size.sqr) y = y + size.sqr;
     } else {
-      if (y == size.n - size.sq) {
+      if (y == size.n - size.sqr) {
         x = x + 1;
         y = 0;
         if (x >= size.n) return true;
@@ -104,7 +109,7 @@ class Sudoku {
   bool _checkIfSafe(int i, int j, int n) {
     return (_availInRow(i, n) &&
         _availInCol(j, n) &&
-        _availInBox(i - i % size.sq, j - j % size.sq, n));
+        _availInBox(i - i % size.sqr, j - j % size.sqr, n));
   }
 
   /// check in the row for existence
@@ -125,8 +130,8 @@ class Sudoku {
 
   /// Returns true if given 3 x 3 block contains num.
   bool _availInBox(int rowStart, int colStart, int number) {
-    for (var i = 0; i < size.sq; i++) {
-      for (var j = 0; j < size.sq; j++) {
+    for (var i = 0; i < size.sqr; i++) {
+      for (var j = 0; j < size.sqr; j++) {
         if (board[rowStart + i][colStart + j].value == number) return false;
       }
     }
@@ -158,12 +163,12 @@ class Sudoku {
       table += '\n';
 
       // Add --+-- if its a edge of box
-      if (row != 0 && row % size.sq == 0) {
+      if (row != 0 && row % size.sqr == 0) {
         // calculate the number of dashes (-) for 1 box
-        var dashes = (size.sq * 2) + size.sq * length;
+        var dashes = (size.sqr * 2) + size.sqr * length;
 
         // multiplies the total dashes number by total box in row
-        var totalDashes = dashes * size.sq;
+        var totalDashes = dashes * size.sqr;
 
         // loop for adding dashes
         for (var i = 0; i < totalDashes; i++) {
@@ -179,7 +184,7 @@ class Sudoku {
       // loop through every cell of row
       for (int col = 0; col < size.n; col++) {
         // Add | if its a edge of box with color
-        if (col != 0 && col % size.sq == 0) table += '|';
+        if (col != 0 && col % size.sqr == 0) table += '|';
 
         // add space before the number
         table += ' ';
